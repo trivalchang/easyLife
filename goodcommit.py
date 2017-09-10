@@ -7,11 +7,12 @@ import subprocess
 localFile = []
 remoteFile = []
 
-diffContent = dict()
+watchList = dict()
+diffList = dict()
 
 def findWatchers(fileName):
 	fp = open(fileName)
-	diffContent[fileName] = []
+	watchList[fileName] = []
 	lineNum = 0
 	for line in fp:
 		lineNum += 1
@@ -21,7 +22,7 @@ def findWatchers(fileName):
 		if ("///" == listComment[0]) and (len(listComment) > 2):
 			if "@author:" == listComment[1]:
 				#print('author', line)
-				diffContent[fileName].append(['author', listComment[2]])
+				watchList[fileName].append(['author', listComment[2]])
 			if "@watcher:" == listComment[1]:
 				watcherName = [listComment[2]]
 				startlineNum = lineNum
@@ -34,32 +35,43 @@ def findWatchers(fileName):
 							testPlan.append(listComment[2])
 					if ("///" == listComment[0]) and (len(listComment) == 2):
 						if "@endwatch" == listComment[1]:
-							endLineNum = lineNum
 							break
-				diffContent[fileName].append(['watcher', watcherName, testPlan, startlineNum, endLineNum])
+				endLineNum = lineNum
+				watchList[fileName].append(['watcher', watcherName, testPlan, startlineNum, endLineNum])
+	print(watchList)
+
 
 
 def findDiffFile(lines):
 
 	for line in lines:
-		if 'diff' in line:
-			#print(line)
-			if 'diff' == line.split()[0]:
-				print(line.split()[0])
-				local = line.split()[2].lstrip('a/')
-				remote = line.split()[3].lstrip('b/')
-				localFile.append(line.split()[2].lstrip('a/'))
-				remoteFile.append(line.split()[3].lstrip('b/'))
+		#print(line)
+		diffs = line.split()
+		if diffs == []:
+			continue
+		if 'diff' == diffs[0]:
+			local = diffs[2].lstrip('a/')
+			remote = diffs[3].lstrip('b/')
+
+			localFile.append(diffs[2].lstrip('a/'))
+			remoteFile.append(diffs[3].lstrip('b/'))
+			diffList[local] = []
+			continue
+		
+		if '@@' == diffs[0]:
+			num = diffs[1].lstrip('-').split(',')
+			diffList[local].append(num)
 
 
 
 	for item in localFile:
-		print('local file :', item)
+		#print('local file :', item)
 		findWatchers(item)
 
 	for item in remoteFile:
 		print('remote file:', item)
 
+	print(diffList)
 
 
 
@@ -67,7 +79,7 @@ def parseGitBlame():
 
 	for file in remoteFile:
 		blame = subprocess.check_output(['git', 'blame', file])
-		print(blame)
+		#print(blame)
 
 
 
