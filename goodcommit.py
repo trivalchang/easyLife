@@ -42,7 +42,7 @@ def findWatchers(fileName):
 
 
 
-def findDiffFile(lines):
+def findDiffList(lines):
 
 	for line in lines:
 		#print(line)
@@ -63,8 +63,6 @@ def findDiffFile(lines):
 			num[1] += num[0]
 			diffList[local].append(num)
 
-
-
 	for item in localFile:
 		#print('local file :', item)
 		findWatchers(item)
@@ -74,6 +72,12 @@ def findDiffFile(lines):
 
 	print('diffList =', diffList)
 
+
+def findReviewerAndTestPlan():
+	for fn in localFile:
+		print('file', fn)
+		for idx, diffs in enumerate(diffList[fn]):
+			print('\tdiff ', idx, diffs)
 
 
 def parseGitBlame():
@@ -95,7 +99,8 @@ def main():
 	except:
 		print('error to execute')
 	diff_lines = diff_output.splitlines()
-	findDiffFile(diff_lines)
+	findDiffList(diff_lines)
+	findReviewerAndTestPlan()
 	parseGitBlame()
 	#print(diff_output)
 main()
