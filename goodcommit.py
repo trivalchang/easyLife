@@ -50,16 +50,17 @@ def findDiffFile(lines):
 		if diffs == []:
 			continue
 		if 'diff' == diffs[0]:
-			local = diffs[2].lstrip('a/')
-			remote = diffs[3].lstrip('b/')
+			local = diffs[2][2:]
+			remote = diffs[3][2:]
 
-			localFile.append(diffs[2].lstrip('a/'))
-			remoteFile.append(diffs[3].lstrip('b/'))
+			localFile.append(diffs[2][2:])
+			remoteFile.append(diffs[3][2:])
 			diffList[local] = []
 			continue
 		
 		if '@@' == diffs[0]:
-			num = diffs[1].lstrip('-').split(',')
+			num = map(int, diffs[1].lstrip('-').split(','))
+			num[1] += num[0]
 			diffList[local].append(num)
 
 
@@ -71,7 +72,7 @@ def findDiffFile(lines):
 	for item in remoteFile:
 		print('remote file:', item)
 
-	print(diffList)
+	print('diffList =', diffList)
 
 
 
