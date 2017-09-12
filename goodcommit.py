@@ -9,6 +9,8 @@ remoteFile = []
 
 watchList = dict()
 diffList = dict()
+reviewerList = []
+testplanList = []
 
 def findWatchers(fileName):
 	fp = open(fileName)
@@ -30,15 +32,18 @@ def findWatchers(fileName):
 				for line in fp:
 					lineNum += 1
 					listComment = line.split()
+					if listComment == []:
+						continue
 					if ("///" == listComment[0]) and (len(listComment) > 2):
 						if "@testplan:" == listComment[1]:
-							testPlan.append(listComment[2])
+							for item in listComment[2:]:
+								testPlan.append(item)
 					if ("///" == listComment[0]) and (len(listComment) == 2):
 						if "@endwatch" == listComment[1]:
 							break
 				endLineNum = lineNum
 				watchList[fileName].append(['watcher', watcherName, testPlan, startlineNum, endLineNum])
-	print(watchList)
+	#print(watchList)
 
 
 
@@ -63,44 +68,72 @@ def findDiffList(lines):
 			num[1] += num[0]
 			diffList[local].append(num)
 
+	if localFile == []:
+		print('no different')
+		exit()
+	
+	print('checking ', localFile)
+	
 	for item in localFile:
 		#print('local file :', item)
 		findWatchers(item)
 
-	for item in remoteFile:
-		print('remote file:', item)
+	#for item in remoteFile:
+		#print('remote file:', item)
 
-	print('diffList =', diffList)
+	#print('diffList =', diffList)
 
 
 def findReviewerAndTestPlan():
 	for fn in localFile:
-		print('file', fn)
-		for idx, diffs in enumerate(diffList[fn]):
-			print('\tdiff ', idx, diffs)
-
+		#print('file', fn)
+		for i, diffs in enumerate(diffList[fn]):
+			#print('\tdiff ', diffs)
+			for j, watcher in enumerate(watchList[fn]):
+				#print('\t\tWatcher: ', watcher[3], watcher[4])
+				checkrange = range(watcher[3], watcher[4])
+				if (diffs[0] in checkrange) or (diffs[1] in checkrange):
+					#print('\t\t\tmatched')
+					reviewerList.append(watcher[1][0])
+					testplanList.append(watcher[2][0])
 
 def parseGitBlame():
 
 	for file in remoteFile:
-		blame = subprocess.check_output(['git', 'blame', file])
+		#print('execute git blame', file)
+		blameOutput = subprocess.check_output(['git', 'blame', file])
 		#print(blame)
-
+		blamLines = blameOutput.splitlines()
+		for item in diffList[file]:
+			for line in range(item[0], item[1]):
+				#print(blamLines[line])
+				commitId = blamLines[line].split()[0]
+				author = blamLines[line].split()[1].lstrip('(')
+				if commitId != '00000000':
+					#print('blame ', commitId, ' ', author)
+					reviewerList.append(author)
 
 
 def main():
-	print('it is a test2')
 
 	cmd = 'git diff'
-	#diff_output = os.system(cmd)
-	#findDiffFile(diff_output)
 	try:
 		diff_output = subprocess.check_output(['git', 'diff', '--staged'])
 	except:
 		print('error to execute')
+		exit()
+		
 	diff_lines = diff_output.splitlines()
 	findDiffList(diff_lines)
 	findReviewerAndTestPlan()
 	parseGitBlame()
+	
+	print('reviews: ')
+	for name in set(reviewerList):
+		print('\t', name)
+	
+	print('test plan: ')
+	for name in set(testplanList):
+		print('\t', name)
 	#print(diff_output)
 main()
