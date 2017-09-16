@@ -96,12 +96,14 @@ def findReviewerAndTestPlan():
 		for i, diffs in enumerate(diffList[fn]):
 			print('\tdiff ', diffs)
 			for j, watcher in enumerate(watchList[fn]):
+				if (watcher[0] == 'author'):
+					reviewerList.append(watcher[1])
+					continue
 				print('\t\tWatcher: ', watcher[3], watcher[4])
 				checkrange = range(watcher[3], watcher[4])
 				if (diffs[0] in checkrange) or (diffs[1] in checkrange):
 					print('\t\t\tmatched')
 					reviewerList.append(watcher[1][0])
-					reviewDetailList.append([watcher[1][0], fn, checkrange])
 					testplanList.append(watcher[2][0])
 
 def parseGitBlame():

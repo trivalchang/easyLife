@@ -1,1 +1,63 @@
-It's Readme
+goodcommit ver 0.1
+
+Based on some git command, this simple program can find the possible reviewer of the modified code.
+I have tested on OSX sierra and Ubuntu. It should work on Python ver 2.7 and above.
+
+Usage: goodcommit.py [options]
+
+Options:
+  -h, --help    show this help message and exit
+  -b, --blame   run git blame to find the reviewer
+  -d, --detail  print details
+
+Before running goodcommit, you have to 'git add your_files'. goodcommit only checks the staged file
+
+Use case 1: Find the watcher and author
+	Step 1: Add some comments to indicate who is watching the code and what is the test plan
+    		there are 4 keyword following '///'
+    		'@author:'	the initial author or the owner of this file
+    		'@watcher:' the watcher who cares the paragraph, it's the beginning of wathed paragraph
+    		'@testplan:' the testplan must be executed before commit. This keyword if exists must be between @watcher: and '@endwatch' indicate the end of a paragrah
+    		''
+
+			This is a example
+				/// @author: andy_chang
+				...
+				/// @watcher: andy.chang
+    			/// @testplan: dtv112
+    			printf("I am here 2");
+    			/// @endwatch
+
+    Step 2: Run goodcommit.py
+    		the output will be
+   			------------ result ------------
+			reviewer : 
+	 			andy_chang
+	 			andy.chang
+			test plan: 
+	 			dtv112
+
+
+Use case 2: check git blame to find out the previous commiter and print the 1st line of the commit message
+	$ goodcommit.py -b -d 			# search the git blame to find the last author of the modified part of the staged files
+	
+	The output will be
+	------------ result ------------
+	reviews detail: 
+		 ['developer', 'test1.cpp', '843de796', [6, 11]]
+		    	 2nd commit
+		 ['developer', 'test1.cpp', '0de3f202', [6, 11]]
+			     3rd commit
+		 ['developer', 'test2.cpp', '0de3f202', [6, 12]]
+			     3rd commit
+	reviewer : 
+	 	developer
+	 	lynda
+	 	lynn
+	 	andy_chang
+	 	andy.chang
+	test plan: 
+	 	dtv001,
+	 	dtv112
+	 	dtv002
+	 	dtv111
